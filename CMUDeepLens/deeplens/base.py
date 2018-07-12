@@ -1,11 +1,14 @@
 # This file contains the base class for a Lasagne model
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.utils.validation import check_is_fitted
+from sklearn import metrics
 
 from random import shuffle
 import time
 
 import numpy as np
+
+import matplotlib.pyplot as plt
 
 import cPickle as pickle
 
@@ -54,6 +57,7 @@ class BaseLasagneClassifier(BaseEstimator, ClassifierMixin):
         self.val_nepoch = val_nepoch
         self.learning_rate_drop = learning_rate_drop
         self.learning_rate_steps = learning_rate_steps
+        self.roc_auc = dict() #instantiate AUC atribute
 
         self._x = T.tensor4('x')
         self._y = T.matrix('y')
@@ -145,6 +149,7 @@ class BaseLasagneClassifier(BaseEstimator, ClassifierMixin):
 
         lr = self.learning_rate
 
+
         # Loop over training epochs
         for i in range(self.n_epochs):
             print("Starting Epoch : %d"%i)
@@ -174,7 +179,9 @@ class BaseLasagneClassifier(BaseEstimator, ClassifierMixin):
                 if (niter % self.output_nbatch) == 0:
                     print("Iteration : %d -> Training loss: %f"%(niter, train_err / (self.output_nbatch)))
                     train_err = 0
-
+            if (i%10==0) and (i!=0):
+                self.save('deeplens_params_'+str(i)+'.npy')
+            self.eval_AUC(X, y, i)
             print("Epoch took %f s"%(time.time() - start_time))
             start_time = time.time()
             # Lower the  learning rate if  required
@@ -328,3 +335,21 @@ class BaseLasagneClassifier(BaseEstimator, ClassifierMixin):
         fpr = n_fp / np.sum( y == 0).astype('float32')
 
         return tpr, fpr, t
+
+
+    def eval_AUC(self, X, y, epoch):
+        tpr, fpr, t = self.eval_ROC(X,y)
+        self.roc_auc[epoch] = metrics.auc(fpr, tpr)
+        print self.roc_auc
+        if (epoch == (self.n_epochs-1)):
+            roc_auc = np.array(list(self.roc_auc.items()), dtype=float)
+            roc_auc = roc_auc.T
+            plt.figure()
+            plt.title('AUC vs Epochs')
+            plt.xlabel('Epoch')
+            plt.ylabel('AUC')
+            plt.plot(roc_auc[0],roc_auc[1])
+            plt.savefig("AUC_vs_Epoch.png")
+            plt.show()
+            
+
