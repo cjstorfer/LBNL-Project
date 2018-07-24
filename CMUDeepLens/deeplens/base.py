@@ -349,6 +349,7 @@ class BaseLasagneClassifier(BaseEstimator, ClassifierMixin):
             plt.xlabel('Epoch')
             plt.ylabel('AUC')
             plt.plot(roc_auc[0],roc_auc[1])
+            plt.grid(True)
             plt.savefig("AUC_vs_Epoch.png")
             plt.show()
             

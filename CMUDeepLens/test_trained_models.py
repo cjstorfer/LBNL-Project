@@ -15,7 +15,7 @@ from sklearn import metrics
 home = expanduser("~")
 
 
-imgs = 1000
+imgs = 400
 
 # Path to the downloaded files
 # download_path=home+'/Desktop/' # To be adjusted on your machine
@@ -55,7 +55,7 @@ x[mask] = 0
 
 
 model = deeplens_classifier()
-model.load('/Users/Chris/CMUDeepLens/notebooks/Trained_Sets/deeplens_params_003.npy', x, y)
+model.load('/Users/Chris/CMUDeepLens/Trained_Sets/400imgs_120epochs/deeplens_params_final.npy', x, y)
 
 
 
@@ -140,7 +140,7 @@ for i in range(n_sets):
 	# print x_test_set[i].shape
 	tpr[i],fpr[i],th[i] = model.eval_ROC(x_test_set[i], y_test_set[i].reshape(-1,1))
 	roc_auc[i] = metrics.auc(fpr[i], tpr[i])
-	plt.suptitle('ROC curves and AUC for test sets of 100 imgs\nPredictions made by CNN trained on 1000 imgs for 70 epochs', fontsize=25)
+	plt.suptitle('ROC curves and AUC for 10 test sets of 100 imgs', fontsize=25)
 	plt.subplot(5,2,i+1)
 	plt.title('ROC on test set: ' + str(i), fontsize=20)
 	plt.plot(fpr[i],tpr[i])
@@ -157,6 +157,28 @@ for i in range(n_sets):
 plt.savefig("test_trials_ROC.png")
 plt.show()
 
+
+plt.figure()
+x = np.average(fpr, axis = 0)
+y = np.average(tpr, axis = 0)
+stdev_y = np.std(tpr,axis = 0)
+avg_auc = np.average(roc_auc, axis = 0)
+stdev_auc = np.std(roc_auc,axis = 0)
+plt.plot(x,y)
+plt.fill_between(x, y+stdev_y, y-stdev_y, facecolor = 'red')
+plt.xlabel('FPR', fontsize=15)
+plt.ylabel('TPR', fontsize=15)
+plt.xlim([-0.02, 1.0])
+plt.ylim([0.0, 1.02])
+plt.text(1, 0, 'Average AUC: ' + str("%.4f" % avg_auc),
+		verticalalignment='bottom', horizontalalignment='right', fontsize=20)
+plt.text(1, 0.1, 'SD of AUC: ' + str("%.4f" % stdev_auc),
+		verticalalignment='bottom', horizontalalignment='right', fontsize=20)
+plt.grid(True)
+plt.plot([0,1],[0,1], 'g--')
+plt.title('STDEV on test sets', fontsize=20)
+plt.savefig("test_ROC_stats.png")
+plt.show()
 	# p = model.predict_proba(xval)
 
 
